@@ -73,6 +73,11 @@
             opacity: 0.9;
         }
 
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         .btn-stop {
             background-color: #f85149;
             color: #fff;
@@ -210,6 +215,7 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
     let audioCtx = null;
     let isPlaying = false;
     let timerId = null;
+    let currentStep = 0;
 
     const playBtn = document.getElementById('playBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -221,13 +227,9 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         }
     }
 
-    // --- DISTINCT PITCH FREQUENCIES ---
     const NOTES = {
-        // C Chord Notes (C3 Octave)
         C3: 130.81, E3: 164.81, G3: 196.00, A3: 220.00, Bb3: 233.08, C4: 261.63,
-        // E Chord Notes
         E3_root: 164.81, Gs3: 207.65, B3: 246.94, Cs4: 277.18, D4: 293.66, E4: 329.63,
-        // G Chord Notes
         G3_root: 196.00, B3_g: 246.94, D4_g: 293.66, E4_g: 329.63, F4: 349.23, G4: 392.00
     };
 
@@ -236,7 +238,7 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         const gain = audioCtx.createGain();
         osc.frequency.setValueAtTime(140, time);
         osc.frequency.exponentialRampToValueAtTime(35, time + 0.1);
-        gain.gain.setValueAtTime(0.7, time); // Lowered slightly so bass punches through
+        gain.gain.setValueAtTime(0.7, time);
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -259,4 +261,62 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
 
         const bufferSize = audioCtx.sampleRate * 0.1;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.get
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const noiseGain = audioCtx.createGain();
+        noiseGain.gain.setValueAtTime(isAccent ? 0.4 : 0.15, time);
+        noiseGain.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
+        noise.connect(noiseGain);
+        noiseGain.connect(audioCtx.destination);
+        noise.start(time);
+    }
+
+    function playBassNote(freq, time, isPop = false) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        osc.type = isPop ? 'triangle' : 'sawtooth';
+        osc.frequency.setValueAtTime(freq, time);
+
+        filter.type = 'lowpass';
+        if (isPop) {
+            filter.frequency.setValueAtTime(3000, time);
+            filter.frequency.exponentialRampToValueAtTime(400, time + 0.12);
+        } else {
+            filter.frequency.setValueAtTime(1200, time);
+            filter.frequency.exponentialRampToValueAtTime(200, time + 0.2);
+        }
+
+        gain.gain.setValueAtTime(isPop ? 0.6 : 0.8, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + (isPop ? 0.15 : 0.25));
+
+        osc.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        osc.start(time);
+        osc.stop(time + 0.25);
+    }
+
+    // Bo Diddley rhythm pattern (16 sixteenth steps)
+    const boDiddleySteps = [0, 3, 6, 10, 12]; 
+
+    function scheduler() {
+        const tempo = 105;
+        const sixteenthNote = (60 / tempo) / 4;
+        const now = audioCtx.currentTime;
+
+        // Kick & Snare pattern
+        if (boDiddleySteps.includes(currentStep % 16)) {
+            playKick(now);
+            playSnare(now, true);
+        } else if (currentStep % 2 === 0) {
+            playSnare(now, false);
+        }
+
+        // Slap
