@@ -220,14 +220,14 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         }
     }
 
-    // --- FREQUENCY LOOKUP MAP ---
+    // --- DISTINCT PITCH FREQUENCIES (Audible Octave 3 & 4) ---
     const NOTES = {
-        // C Root Range
-        C2: 65.41, E2: 82.41, G2: 98.00, A2: 110.00, Bb2: 116.54, C3: 130.81,
-        // E Root Range
-        E2_root: 82.41, Gs2: 103.83, B2: 123.47, Cs3: 138.59, D3: 146.83, E3: 164.81,
-        // G Root Range
-        G2_root: 98.00, B2_g: 123.47, D3_g: 146.83, E3_g: 164.81, F3: 174.61, G3: 196.00
+        // C Chord Notes
+        C3: 130.81, E3: 164.81, G3: 196.00, A3: 220.00, Bb3: 233.08, C4: 261.63,
+        // E Chord Notes (Transposed up clearly)
+        E3_root: 164.81, Gs3: 207.65, B3: 246.94, Cs4: 277.18, D4: 293.66, E4: 329.63,
+        // G Chord Notes (Transposed up clearly)
+        G3_root: 196.00, B3_g: 246.94, D4_g: 293.66, E4_g: 329.63, F4: 349.23, G4: 392.00
     };
 
     function playKick(time) {
@@ -318,18 +318,15 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         subOsc.frequency.setValueAtTime(freq / 2, time);
 
         filter.type = 'lowpass';
-        filter.Q.setValueAtTime(isPop ? 8 : 5, time);
+        filter.Q.setValueAtTime(isPop ? 6 : 4, time);
 
         if (isPop) {
-            filter.frequency.setValueAtTime(4500, time);
-            filter.frequency.exponentialRampToValueAtTime(250, time + 0.05);
+            filter.frequency.setValueAtTime(5000, time);
+            filter.frequency.exponentialRampToValueAtTime(400, time + 0.05);
 
             gain.gain.setValueAtTime(0.01, time);
             gain.gain.linearRampToValueAtTime(0.85, time + 0.003);
-            gain.gain.exponentialRampToValueAtTime(0.1, time + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.15, time + 0.06);
             gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
         } else {
-            filter.frequency.setValueAtTime(3500, time);
-            filter.frequency.exponentialRampToValueAtTime(110, time + 0.07);
-
-            gain.gain.setValueAtTime(0.01, time);
+            filter.frequency.setValueAtTime(
