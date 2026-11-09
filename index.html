@@ -221,31 +221,23 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         }
     }
 
-    // Frequencies
     const C3 = 130.81, E3 = 164.81, G3 = 196.00, A3 = 220.00, Bb3 = 233.08;
     const C4 = 261.63, Eb4 = 311.13, F4 = 349.23, Fs4 = 369.99, G4 = 392.00, Bb4 = 466.16, C5 = 523.25;
 
-    // --- DRUM KIT SYNTHESIZERS ---
-
-    // 1. Kick Drum (Low-End Punch)
     function playKick(time) {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.frequency.setValueAtTime(150, time);
         osc.frequency.exponentialRampToValueAtTime(35, time + 0.1);
-        
         gain.gain.setValueAtTime(1.0, time);
         gain.gain.exponentialRampToValueAtTime(0.001, time + 0.15);
-        
         osc.connect(gain);
         gain.connect(audioCtx.destination);
         osc.start(time);
         osc.stop(time + 0.15);
     }
 
-    // 2. Snare Drum (Body + White Noise Wire Crack)
     function playSnare(time, isAccent) {
-        // Tonal Shell Body
         const osc = audioCtx.createOscillator();
         const oscGain = audioCtx.createGain();
         osc.type = 'triangle';
@@ -258,7 +250,6 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         osc.start(time);
         osc.stop(time + 0.08);
 
-        // Snare Wires (White Noise)
         const bufferSize = audioCtx.sampleRate * 0.12;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -268,7 +259,6 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
 
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
-
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'highpass';
         filter.frequency.setValueAtTime(1200, time);
@@ -284,7 +274,6 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         noise.stop(time + 0.12);
     }
 
-    // 3. Hi-Hat / Cymbal (Metallic Highs)
     function playHiHat(time, isOpen = false) {
         const bufferSize = audioCtx.sampleRate * (isOpen ? 0.15 : 0.04);
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
@@ -295,7 +284,6 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
 
         const noise = audioCtx.createBufferSource();
         noise.buffer = buffer;
-
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'highpass';
         filter.frequency.setValueAtTime(7000, time);
@@ -310,8 +298,6 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         noise.start(time);
         noise.stop(time + (isOpen ? 0.15 : 0.04));
     }
-
-    // --- OTHER INSTRUMENTS ---
 
     function playBassNote(freq, time, duration) {
         const osc = audioCtx.createOscillator();
@@ -333,7 +319,6 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
 
         osc1.type = 'square';
         osc2.type = 'sawtooth';
-
         let startFreq = bend ? freq * 0.92 : freq;
 
         osc1.frequency.setValueAtTime(startFreq, time);
@@ -358,18 +343,13 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         osc2.stop(time + duration);
     }
 
-    // --- SEQUENCER ---
-
     function startSequence() {
-        let tempo = 112; // Classic Bo Diddley Tempo
+        let tempo = 112;
         let sixteenth = (60 / tempo) / 4;
 
-        // Standard 16-step Bo Diddley Clave Accent Positions:
-        // Bar 1 (3 hits): Step 0, Step 3, Step 6
-        // Bar 2 (2 hits): Step 10, Step 12
         const boDiddleySnareAccents = [0, 3, 6, 10, 12];
         const ghostSnares = [2, 4, 8, 14];
-        const kickHits = [0, 6, 10, 12]; // Kick anchors the clave
+        const kickHits = [0, 6, 10, 12];
 
         const bassPattern = [C3, C3, E3, E3, G3, G3, A3, Bb3];
         const harmonicaMelody = [
@@ -386,31 +366,21 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
             for (let i = 0; i < 16; i++) {
                 let time = now + (i * sixteenth);
 
-                // --- 1. Full Drum Kit Logic ---
-                // Kick drum on main beat anchors
-                if (kickHits.includes(i)) {
-                    playKick(time);
-                }
+                if (kickHits.includes(i)) playKick(time);
 
-                // Snare plays the Bo Diddley syncopation
                 if (boDiddleySnareAccents.includes(i)) {
-                    playSnare(time, true); // Accent snare hit
+                    playSnare(time, true);
                 } else if (ghostSnares.includes(i)) {
-                    playSnare(time, false); // Light ghost snare fill
+                    playSnare(time, false);
                 }
 
-                // Continuous Hi-Hat keeping steady 8th note rhythm
-                if (i % 2 === 0) {
-                    playHiHat(time, i === 14); // Open hi-hat on step 14 transition
-                }
+                if (i % 2 === 0) playHiHat(time, i === 14);
 
-                // --- 2. Boogie Bass (C-E-G) ---
                 if (i % 2 === 0) {
                     let bassIdx = (Math.floor(i / 2)) % bassPattern.length;
                     playBassNote(bassPattern[bassIdx], time, sixteenth * 1.8);
                 }
 
-                // --- 3. Harmonica Melody ---
                 harmonicaMelody.forEach(m => {
                     if (m.step === i) {
                         playHarmonicaNote(m.note, time, m.dur * sixteenth * 4, m.bend);
@@ -425,9 +395,7 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
 
     playBtn.addEventListener('click', () => {
         initAudio();
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
+        if (audioCtx.state === 'suspended') audioCtx.resume();
         isPlaying = true;
         playBtn.disabled = true;
         stopBtn.disabled = false;
