@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1-Hour Impression Blueprint + Slap Bass Funk Track</title>
+    <title>1-Hour Impression Blueprint + 12-Bar Slap Bass Track</title>
     <style>
         :root {
             --bg-color: #0d1117;
@@ -148,7 +148,7 @@
 <div class="container">
     <header>
         <h1>1-Hour Impression Blueprint</h1>
-        <div class="subtitle">Bo Diddley Drum Kit + Funk Slap & Pop Bassline</div>
+        <div class="subtitle">Bo Diddley Drum Kit + 12-Bar C-E-G Funk Slap Bassline</div>
     </header>
 
     <div class="audio-controls">
@@ -180,11 +180,11 @@
     <div class="post-template">
         <h2>LinkedIn Copy & Paste Post</h2>
         <button class="copy-btn" onclick="copyPost()">Copy Post Text</button>
-        <pre id="postText">🎵 How the Bo Diddley rhythm can get you 100 impressions online in 1 hour...
+        <pre id="postText">🎵 How a 12-bar rhythm structure can get you 100 impressions online in 1 hour...
 
-In music, dynamic rhythm catches the ear:
+In music, structured progression drives momentum:
 1. The iconic Bo Diddley beat on full drums sets the tempo.
-2. A funky slap-and-pop bassline drives the high-energy groove.
+2. A 12-bar slap bass progression moves across C, E, and G chords.
 
 Digital visibility works the exact same way—it's all about pattern recognition and distribution!
 
@@ -220,9 +220,15 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         }
     }
 
-    // Frequencies (C2 - C3 Range)
-    const C2 = 65.41, E2 = 82.41, G2 = 98.00, A2 = 110.00, Bb2 = 116.54;
-    const C3 = 130.81, Eb3 = 155.56, E3 = 164.81, F3 = 174.61, G3 = 196.00, Bb3 = 233.08;
+    // --- FREQUENCY LOOKUP MAP ---
+    const NOTES = {
+        // C Root Range
+        C2: 65.41, E2: 82.41, G2: 98.00, A2: 110.00, Bb2: 116.54, C3: 130.81,
+        // E Root Range
+        E2_root: 82.41, Gs2: 103.83, B2: 123.47, Cs3: 138.59, D3: 146.83, E3: 164.81,
+        // G Root Range
+        G2_root: 98.00, B2_g: 123.47, D3_g: 146.83, E3_g: 164.81, F3: 174.61, G3: 196.00
+    };
 
     function playKick(time) {
         const osc = audioCtx.createOscillator();
@@ -278,4 +284,52 @@ Impression ≠ conversion—it just means you stepped on stage. Once you're visi
         const bufferSize = audioCtx.sampleRate * (isOpen ? 0.15 : 0.04);
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
-        for (let i
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(7000, time);
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.3, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + (isOpen ? 0.15 : 0.04));
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(audioCtx.destination);
+        noise.start(time);
+        noise.stop(time + (isOpen ? 0.15 : 0.04));
+    }
+
+    function playSlapBass(freq, time, duration, isPop = false) {
+        const osc = audioCtx.createOscillator();
+        const subOsc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const filter = audioCtx.createBiquadFilter();
+
+        osc.type = isPop ? 'square' : 'sawtooth';
+        subOsc.type = 'triangle';
+
+        osc.frequency.setValueAtTime(freq, time);
+        subOsc.frequency.setValueAtTime(freq / 2, time);
+
+        filter.type = 'lowpass';
+        filter.Q.setValueAtTime(isPop ? 8 : 5, time);
+
+        if (isPop) {
+            filter.frequency.setValueAtTime(4500, time);
+            filter.frequency.exponentialRampToValueAtTime(250, time + 0.05);
+
+            gain.gain.setValueAtTime(0.01, time);
+            gain.gain.linearRampToValueAtTime(0.85, time + 0.003);
+            gain.gain.exponentialRampToValueAtTime(0.1, time + 0.06);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+        } else {
+            filter.frequency.setValueAtTime(3500, time);
+            filter.frequency.exponentialRampToValueAtTime(110, time + 0.07);
+
+            gain.gain.setValueAtTime(0.01, time);
