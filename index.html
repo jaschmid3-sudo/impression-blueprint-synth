@@ -57,7 +57,7 @@
                 1-Hour Impression Blueprint & Audio Synth
             </h1>
             <p class="text-[#8b949e] text-sm md:text-base">
-                Synthesized Web Audio Engine featuring 12-Bar Boogie-Woogie Piano Melody & Slap Bass
+                Synthesized Web Audio Engine featuring Swinging 8th-Note Boogie Piano & Slap Bass
             </p>
         </header>
 
@@ -69,7 +69,7 @@
                 <div class="flex items-center gap-3">
                     <button id="playBtn" class="bg-[#3fb950] hover:bg-[#2ea043] text-black font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition duration-150 transform active:scale-95 shadow-lg">
                         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        Play Boogie Piano
+                        Play Swing Boogie
                     </button>
                     <button id="stopBtn" disabled class="bg-[#21262d] text-[#8b949e] border border-[#30363d] font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
@@ -78,8 +78,8 @@
                 </div>
                 
                 <div class="text-right">
-                    <div id="statusText" class="text-sm font-semibold text-[#d29922]">Engine Ready (Click Play)</div>
-                    <div id="barTracker" class="text-xs text-[#58a6ff] font-mono font-semibold">Bar 1 / 12 (E7 Boogie)</div>
+                    <div id="statusText" class="text-sm font-semibold text-[#d29922]">Engine Ready</div>
+                    <div id="barTracker" class="text-xs text-[#58a6ff] font-mono font-semibold">Bar 1 / 12 (E7 Swing)</div>
                 </div>
             </div>
 
@@ -89,9 +89,9 @@
                 <div class="space-y-2">
                     <div class="flex justify-between text-sm font-medium">
                         <label for="bpmSlider" class="text-[#c9d1d9]">Tempo (BPM)</label>
-                        <span id="bpmValue" class="text-[#58a6ff] font-mono font-bold">115</span>
+                        <span id="bpmValue" class="text-[#58a6ff] font-mono font-bold">120</span>
                     </div>
-                    <input type="range" id="bpmSlider" min="70" max="160" value="115" class="w-full">
+                    <input type="range" id="bpmSlider" min="70" max="160" value="120" class="w-full">
                 </div>
 
                 <!-- Volume Slider -->
@@ -106,9 +106,9 @@
 
             <!-- Audio Sequencer Visualizer LED Bar -->
             <div class="space-y-2">
-                <div class="text-xs uppercase tracking-wider text-[#8b949e] font-semibold">16-Step Pattern Sequencer</div>
-                <div id="sequencerGrid" class="grid grid-cols-8 md:grid-cols-16 gap-2 pt-2">
-                    <!-- 16 LEDs generated dynamically -->
+                <div class="text-xs uppercase tracking-wider text-[#8b949e] font-semibold">8-Step Swing Sequencer</div>
+                <div id="sequencerGrid" class="grid grid-cols-8 gap-2 pt-2">
+                    <!-- 8 LEDs generated dynamically for 8th note steps -->
                 </div>
             </div>
 
@@ -155,437 +155,4 @@
             </div>
             
             <div class="relative">
-                <pre id="postTemplateText" class="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 text-xs md:text-sm text-[#c9d1d9] whitespace-pre-wrap font-sans leading-relaxed">🚀 Driving 100+ Impressions in Under 1 Hour: Strategy & Synthesizer Demo
-
-Want to capture immediate audience attention online? Check out this interactive Web Audio synthesizer built purely with code!
-
-It combines a classic Bo Diddley rhythm section with a 12-bar Boogie-Woogie bassline and acoustic piano melody directly in your browser.
-
-Try the live audio demo here:
-https://jaschmid3-sudo.github.io/impression-blueprint-synth/
-
-#WebAudio #JavaScript #Synthesizer #DigitalMarketing #WebDev</pre>
-            </div>
-            <div id="toastMessage" class="hidden text-xs text-[#3fb950] font-semibold text-right">✓ Copied to clipboard!</div>
-        </div>
-
-    </div>
-
-    <!-- Web Audio & Visualizer Script -->
-    <script>
-        // Audio Engine State
-        let audioCtx = null;
-        let masterGainNode = null;
-        let analyserNode = null;
-        let isPlaying = false;
-        let step = 0;
-        let currentBar = 0;
-        let timerId = null;
-        let tempo = 115;
-        let volume = 0.8;
-
-        // UI Element References
-        const playBtn = document.getElementById('playBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const statusText = document.getElementById('statusText');
-        const barTracker = document.getElementById('barTracker');
-        const bpmSlider = document.getElementById('bpmSlider');
-        const bpmValue = document.getElementById('bpmValue');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const volumeValue = document.getElementById('volumeValue');
-        const sequencerGrid = document.getElementById('sequencerGrid');
-        const visualizerCanvas = document.getElementById('visualizerCanvas');
-        const copyPostBtn = document.getElementById('copyPostBtn');
-        const toastMessage = document.getElementById('toastMessage');
-        const canvasCtx = visualizerCanvas.getContext('2d');
-
-        // Rhythm Patterns
-        const boDiddleyPattern = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0];
-        const kickPattern = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0];
-
-        // Classic Boogie-Woogie Walking Bass Sequences
-        const eBoogieBass = [
-            41.20, 41.20, 51.91, 61.74, 69.30, 73.42, 69.30, 61.74,
-            41.20, 41.20, 51.91, 61.74, 69.30, 73.42, 69.30, 51.91
-        ];
-
-        const aBoogieBass = [
-            55.00, 55.00, 69.30, 82.41, 92.50, 98.00, 92.50, 82.41,
-            55.00, 55.00, 69.30, 82.41, 92.50, 98.00, 92.50, 69.30
-        ];
-
-        const bBoogieBass = [
-            61.74, 61.74, 77.78, 92.50, 103.83, 110.00, 103.83, 92.50,
-            61.74, 61.74, 77.78, 92.50, 103.83, 110.00, 103.83, 77.78
-        ];
-
-        // Active 16th-Note Continuous Boogie Piano Right-Hand Lines (No Rests)
-        const eBoogieMelody1 = [
-            392.00, 415.30, 493.88, 659.25, 392.00, 415.30, 493.88, 659.25,
-            587.33, 493.88, 415.30, 392.00, 329.63, 392.00, 415.30, 493.88
-        ];
-
-        const eBoogieMelody2 = [
-            659.25, 587.33, 493.88, 415.30, 392.00, 415.30, 493.88, 659.25,
-            783.99, 659.25, 587.33, 493.88, 415.30, 392.00, 329.63, 415.30
-        ];
-
-        const aBoogieMelody = [
-            523.25, 554.37, 659.25, 880.00, 523.25, 554.37, 659.25, 880.00,
-            783.99, 659.25, 554.37, 523.25, 440.00, 523.25, 554.37, 659.25
-        ];
-
-        const bBoogieMelody = [
-            587.33, 622.25, 739.99, 987.77, 587.33, 622.25, 739.99, 987.77,
-            880.00, 739.99, 622.25, 587.33, 493.88, 587.33, 622.25, 739.99
-        ];
-
-        // 12-Bar Boogie-Woogie Structure
-        const twelveBarBoogie = [
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 1
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody2 }, // Bar 2
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 3
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody2 }, // Bar 4
-            { name: "A7 Boogie", bass: aBoogieBass, melody: aBoogieMelody  }, // Bar 5
-            { name: "A7 Boogie", bass: aBoogieBass, melody: aBoogieMelody  }, // Bar 6
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 7
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody2 }, // Bar 8
-            { name: "B7 Boogie", bass: bBoogieBass, melody: bBoogieMelody  }, // Bar 9
-            { name: "A7 Boogie", bass: aBoogieBass, melody: aBoogieMelody  }, // Bar 10
-            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 11
-            { name: "B7 Turnaround", bass: bBoogieBass, melody: bBoogieMelody }  // Bar 12
-        ];
-
-        // Build Sequencer LEDs
-        for (let i = 0; i < 16; i++) {
-            const led = document.createElement('div');
-            led.className = `step-led h-3 rounded-full bg-[#21262d] border border-[#30363d] ${boDiddleyPattern[i] ? 'accent' : ''}`;
-            led.id = `led-${i}`;
-            sequencerGrid.appendChild(led);
-        }
-
-        // Resize Canvas dynamically
-        function resizeCanvas() {
-            visualizerCanvas.width = visualizerCanvas.clientWidth;
-            visualizerCanvas.height = visualizerCanvas.clientHeight;
-        }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Ensure Audio Engine Creation & Resume on Direct User Gesture
-        async function ensureAudioStarted() {
-            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            
-            if (!audioCtx) {
-                audioCtx = new AudioContextClass();
-
-                masterGainNode = audioCtx.createGain();
-                masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-
-                analyserNode = audioCtx.createAnalyser();
-                analyserNode.fftSize = 256;
-
-                masterGainNode.connect(analyserNode);
-                analyserNode.connect(audioCtx.destination);
-                
-                drawVisualizer();
-            }
-
-            if (audioCtx.state === 'suspended') {
-                await audioCtx.resume();
-            }
-        }
-
-        // Trigger Kick Drum Sound
-        function playKick(time) {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            
-            osc.connect(gain);
-            gain.connect(masterGainNode);
-
-            osc.frequency.setValueAtTime(130, time);
-            osc.frequency.exponentialRampToValueAtTime(0.001, time + 0.16);
-
-            gain.gain.setValueAtTime(1.0, time);
-            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
-
-            osc.start(time);
-            osc.stop(time + 0.16);
-        }
-
-        // Trigger Snare Drum Sound
-        function playSnare(time) {
-            const bufferSize = audioCtx.sampleRate * 0.12;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = buffer.getChannelData(0);
-            
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = Math.random() * 2 - 1;
-            }
-
-            const whiteNoise = audioCtx.createBufferSource();
-            whiteNoise.buffer = buffer;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.setValueAtTime(800, time);
-
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.6, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
-
-            whiteNoise.connect(filter);
-            filter.connect(gain);
-            gain.connect(masterGainNode);
-
-            whiteNoise.start(time);
-            whiteNoise.stop(time + 0.12);
-        }
-
-        // Trigger Slap Bass Sound
-        function playSlapBass(time, freq) {
-            if (!freq) return;
-
-            const osc = audioCtx.createOscillator();
-            const filter = audioCtx.createBiquadFilter();
-            const gain = audioCtx.createGain();
-
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, time);
-
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(2800, time);
-            filter.frequency.exponentialRampToValueAtTime(250, time + 0.10);
-
-            gain.gain.setValueAtTime(0.85, time);
-            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.11);
-
-            osc.connect(filter);
-            filter.connect(gain);
-            gain.connect(masterGainNode);
-
-            osc.start(time);
-            osc.stop(time + 0.11);
-        }
-
-        // Bright Acoustic Piano Sound Generator
-        function playPianoMelody(time, freq) {
-            if (!freq) return;
-
-            const oscFundamental = audioCtx.createOscillator();
-            const oscOvertone = audioCtx.createOscillator();
-            const oscAttack = audioCtx.createOscillator();
-
-            const filter = audioCtx.createBiquadFilter();
-            const gain = audioCtx.createGain();
-
-            oscFundamental.type = 'triangle';
-            oscOvertone.type = 'sine';
-            oscAttack.type = 'square';
-
-            oscFundamental.frequency.setValueAtTime(freq, time);
-            oscOvertone.frequency.setValueAtTime(freq * 2.003, time);
-            oscAttack.frequency.setValueAtTime(freq * 4, time);
-
-            filter.type = 'lowpass';
-            filter.frequency.setValueAtTime(6500, time);
-            filter.frequency.exponentialRampToValueAtTime(800, time + 0.18);
-
-            gain.gain.setValueAtTime(1.10, time);
-            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
-
-            oscFundamental.connect(filter);
-            oscOvertone.connect(filter);
-            oscAttack.connect(filter);
-            filter.connect(gain);
-            gain.connect(masterGainNode);
-
-            oscFundamental.start(time);
-            oscOvertone.start(time);
-            oscAttack.start(time);
-
-            oscFundamental.stop(time + 0.22);
-            oscOvertone.stop(time + 0.22);
-            oscAttack.stop(time + 0.22);
-        }
-
-        // Sequencer Clock Step Routine
-        function stepScheduler() {
-            if (!audioCtx || audioCtx.state !== 'running') return;
-            
-            const now = audioCtx.currentTime;
-            const currentStep = step % 16;
-
-            // Update measure counter every 16 steps
-            if (currentStep === 0 && step > 0) {
-                currentBar = (currentBar + 1) % 12;
-            }
-
-            const currentChord = twelveBarBoogie[currentBar];
-            barTracker.textContent = `Bar ${currentBar + 1} / 12 (${currentChord.name})`;
-
-            // Highlight current step LED
-            const leds = document.querySelectorAll('.step-led');
-            leds.forEach((led, idx) => {
-                if (idx === currentStep) {
-                    led.classList.add('active');
-                } else {
-                    led.classList.remove('active');
-                }
-            });
-
-            // Play drum hits
-            if (kickPattern[currentStep]) playKick(now);
-            if (boDiddleyPattern[currentStep]) playSnare(now);
-
-            // Play continuous Boogie-Woogie walking bass note
-            playSlapBass(now, currentChord.bass[currentStep]);
-
-            // Play continuous Boogie-Woogie piano melody note
-            playPianoMelody(now, currentChord.melody[currentStep]);
-
-            step++;
-        }
-
-        // Oscilloscope Visualizer Renderer
-        function drawVisualizer() {
-            requestAnimationFrame(drawVisualizer);
-            if (!analyserNode) return;
-
-            const bufferLength = analyserNode.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            analyserNode.getByteTimeDomainData(dataArray);
-
-            canvasCtx.fillStyle = '#0d1117';
-            canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
-
-            canvasCtx.lineWidth = 2;
-            canvasCtx.strokeStyle = '#58a6ff';
-            canvasCtx.beginPath();
-
-            const sliceWidth = visualizerCanvas.width * 1.0 / bufferLength;
-            let x = 0;
-
-            for (let i = 0; i < bufferLength; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * visualizerCanvas.height / 2;
-
-                if (i === 0) {
-                    canvasCtx.moveTo(x, y);
-                } else {
-                    canvasCtx.lineTo(x, y);
-                }
-
-                x += sliceWidth;
-            }
-
-            canvasCtx.lineTo(visualizerCanvas.width, visualizerCanvas.height / 2);
-            canvasCtx.stroke();
-        }
-
-        // Start Playback Routine
-        async function startPlayback() {
-            try {
-                await ensureAudioStarted();
-
-                if (isPlaying) return;
-
-                isPlaying = true;
-                playBtn.disabled = true;
-                stopBtn.disabled = false;
-                stopBtn.classList.remove('text-[#8b949e]', 'bg-[#21262d]');
-                stopBtn.classList.add('text-white', 'bg-[#f85149]', 'hover:bg-[#da3633]');
-
-                statusText.textContent = "🎹 Playing Boogie Piano";
-                statusText.className = "text-sm font-semibold text-[#3fb950]";
-
-                step = 0;
-                currentBar = 0;
-                
-                // Immediately schedule first step
-                stepScheduler();
-
-                const intervalMs = (60 / tempo / 4) * 1000;
-                timerId = setInterval(stepScheduler, intervalMs);
-            } catch (e) {
-                console.error("Failed to start audio playback:", e);
-                statusText.textContent = "Audio Error (Click Play again)";
-                statusText.className = "text-sm font-semibold text-[#f85149]";
-            }
-        }
-
-        // Stop Playback Routine
-        function stopPlayback() {
-            isPlaying = false;
-            if (timerId) {
-                clearInterval(timerId);
-                timerId = null;
-            }
-
-            playBtn.disabled = false;
-            stopBtn.disabled = true;
-            stopBtn.classList.remove('text-white', 'bg-[#f85149]', 'hover:bg-[#da3633]');
-            stopBtn.classList.add('text-[#8b949e]', 'bg-[#21262d]');
-
-            statusText.textContent = "Stopped";
-            statusText.className = "text-sm font-semibold text-[#d29922]";
-            barTracker.textContent = "Bar 1 / 12 (E7 Boogie)";
-
-            document.querySelectorAll('.step-led').forEach(led => led.classList.remove('active'));
-        }
-
-        // Update Tempo
-        bpmSlider.addEventListener('input', (e) => {
-            tempo = parseInt(e.target.value);
-            bpmValue.textContent = tempo;
-            if (isPlaying) {
-                clearInterval(timerId);
-                const intervalMs = (60 / tempo / 4) * 1000;
-                timerId = setInterval(stepScheduler, intervalMs);
-            }
-        });
-
-        // Update Master Volume
-        volumeSlider.addEventListener('input', (e) => {
-            volume = parseInt(e.target.value) / 100;
-            volumeValue.textContent = `${e.target.value}%`;
-            if (masterGainNode && audioCtx) {
-                masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-            }
-        });
-
-        // Control Listeners
-        playBtn.addEventListener('click', startPlayback);
-        stopBtn.addEventListener('click', stopPlayback);
-
-        // Copy Clipboard Helper
-        copyPostBtn.addEventListener('click', () => {
-            const textToCopy = document.getElementById('postTemplateText').innerText;
-            
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(textToCopy).then(showToast);
-            } else {
-                const textArea = document.createElement("textarea");
-                textArea.value = textToCopy;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    showToast();
-                } catch (err) {
-                    console.error('Copy failed', err);
-                }
-                document.body.removeChild(textArea);
-            }
-        });
-
-        function showToast() {
-            toastMessage.classList.remove('hidden');
-            setTimeout(() => {
-                toastMessage.classList.add('hidden');
-            }, 2500);
-        }
-    </script>
-</body>
-</html>
+                <pre id="postTemplateText" class="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 text-xs md:text-sm text-[#c9d1d9] whitespace-pre-wrap font-sans leading-
