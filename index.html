@@ -1,3 +1,6 @@
+Here is a fresh, single-file HTML program built from scratch. It features a Web Audio synth engine with a 16th-note slap bassline, Bo Diddley rhythm section, oscilloscope visualizer, strategy cards, and a shareable template.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,7 +18,7 @@
         }
 
         .step-led {
-            transition: all 0.1s ease-in-out;
+            transition: all 0.08s ease-in-out;
         }
 
         .step-led.active {
@@ -57,7 +60,7 @@
                 1-Hour Impression Blueprint & Audio Synth
             </h1>
             <p class="text-[#8b949e] text-sm md:text-base">
-                Synthesized Web Audio Engine featuring Swinging 8th-Note Boogie Piano & Slap Bass
+                Synthesized Web Audio Engine featuring Bo Diddley Beats & Slap Bass
             </p>
         </header>
 
@@ -69,7 +72,7 @@
                 <div class="flex items-center gap-3">
                     <button id="playBtn" class="bg-[#3fb950] hover:bg-[#2ea043] text-black font-bold px-6 py-3 rounded-lg flex items-center gap-2 transition duration-150 transform active:scale-95 shadow-lg">
                         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        Play Swing Boogie
+                        Play Groove
                     </button>
                     <button id="stopBtn" disabled class="bg-[#21262d] text-[#8b949e] border border-[#30363d] font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
                         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
@@ -79,7 +82,7 @@
                 
                 <div class="text-right">
                     <div id="statusText" class="text-sm font-semibold text-[#d29922]">Engine Ready</div>
-                    <div id="barTracker" class="text-xs text-[#58a6ff] font-mono font-semibold">Bar 1 / 12 (E7 Swing)</div>
+                    <div class="text-xs text-[#8b949e]">Web Audio API Synthesis</div>
                 </div>
             </div>
 
@@ -89,9 +92,9 @@
                 <div class="space-y-2">
                     <div class="flex justify-between text-sm font-medium">
                         <label for="bpmSlider" class="text-[#c9d1d9]">Tempo (BPM)</label>
-                        <span id="bpmValue" class="text-[#58a6ff] font-mono font-bold">120</span>
+                        <span id="bpmValue" class="text-[#58a6ff] font-mono font-bold">105</span>
                     </div>
-                    <input type="range" id="bpmSlider" min="70" max="160" value="120" class="w-full">
+                    <input type="range" id="bpmSlider" min="70" max="150" value="105" class="w-full">
                 </div>
 
                 <!-- Volume Slider -->
@@ -106,9 +109,9 @@
 
             <!-- Audio Sequencer Visualizer LED Bar -->
             <div class="space-y-2">
-                <div class="text-xs uppercase tracking-wider text-[#8b949e] font-semibold">8-Step Swing Sequencer</div>
-                <div id="sequencerGrid" class="grid grid-cols-8 gap-2 pt-2">
-                    <!-- 8 LEDs generated dynamically for 8th note steps -->
+                <div class="text-xs uppercase tracking-wider text-[#8b949e] font-semibold">16-Step Pattern Sequencer</div>
+                <div id="sequencerGrid" class="grid grid-cols-8 md:grid-cols-16 gap-2 pt-2">
+                    <!-- 16 LEDs generated dynamically -->
                 </div>
             </div>
 
@@ -155,4 +158,328 @@
             </div>
             
             <div class="relative">
-                <pre id="postTemplateText" class="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 text-xs md:text-sm text-[#c9d1d9] whitespace-pre-wrap font-sans leading-
+                <pre id="postTemplateText" class="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 text-xs md:text-sm text-[#c9d1d9] whitespace-pre-wrap font-sans leading-relaxed">🚀 Driving 100+ Impressions in Under 1 Hour: Strategy & Synthesizer Demo
+
+Want to capture immediate audience attention online? Check out this interactive Web Audio synthesizer built purely with code!
+
+It combines a classic Bo Diddley rhythm section with a punchy 16th-note slap bassline directly in your browser.
+
+Try the live audio demo here:
+https://jaschmid3-sudo.github.io/impression-blueprint-synth/
+
+#WebAudio #JavaScript #Synthesizer #DigitalMarketing #WebDev</pre>
+            </div>
+            <div id="toastMessage" class="hidden text-xs text-[#3fb950] font-semibold text-right">✓ Copied to clipboard!</div>
+        </div>
+
+    </div>
+
+    <!-- Web Audio & Visualizer Script -->
+    <script>
+        // Audio State & Look-ahead Engine Parameters
+        let audioCtx = null;
+        let masterGainNode = null;
+        let analyserNode = null;
+        let noiseBuffer = null;
+        let isPlaying = false;
+        let currentStep = 0;
+        let nextNoteTime = 0.0;
+        let timerId = null;
+        let tempo = 105;
+        let volume = 0.8;
+
+        // DOM References
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusText = document.getElementById('statusText');
+        const bpmSlider = document.getElementById('bpmSlider');
+        const bpmValue = document.getElementById('bpmValue');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const sequencerGrid = document.getElementById('sequencerGrid');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const copyPostBtn = document.getElementById('copyPostBtn');
+        const toastMessage = document.getElementById('toastMessage');
+        const canvasCtx = visualizerCanvas.getContext('2d');
+
+        // Bo Diddley Drum Patterns (16th note steps)
+        const kickPattern = [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0];
+        const boDiddleySnare = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0];
+
+        // Driving 16th-Note Slap Bass Frequencies (E Pentatonic Groove)
+        const bassNotes = [
+            41.20, 41.20, 82.41, 41.20, 61.74, 41.20, 82.41, 61.74,
+            41.20, 41.20, 98.00, 41.20, 73.42, 41.20, 82.41, 73.42
+        ];
+
+        // Build Sequencer LEDs
+        for (let i = 0; i < 16; i++) {
+            const led = document.createElement('div');
+            led.className = `step-led h-3 rounded-full bg-[#21262d] border border-[#30363d] ${boDiddleySnare[i] ? 'accent' : ''}`;
+            led.id = `led-${i}`;
+            sequencerGrid.appendChild(led);
+        }
+
+        // Resize Canvas
+        function resizeCanvas() {
+            visualizerCanvas.width = visualizerCanvas.clientWidth;
+            visualizerCanvas.height = visualizerCanvas.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Create Noise Buffer for Snare
+        function createNoiseBuffer(ctx) {
+            const bufferSize = ctx.sampleRate * 0.12;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+            return buffer;
+        }
+
+        // Init Engine Context synchronously on user action
+        function initAudioEngine() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                masterGainNode = audioCtx.createGain();
+                masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 256;
+
+                masterGainNode.connect(analyserNode);
+                analyserNode.connect(audioCtx.destination);
+
+                noiseBuffer = createNoiseBuffer(audioCtx);
+                drawVisualizer();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Kick Drum
+        function playKick(time) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+
+            osc.frequency.setValueAtTime(130, time);
+            osc.frequency.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+            gain.gain.setValueAtTime(1.0, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+            osc.start(time);
+            osc.stop(time + 0.16);
+        }
+
+        // Snare Drum
+        function playSnare(time) {
+            if (!noiseBuffer) return;
+
+            const noiseSource = audioCtx.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(800, time);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.6, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+
+            noiseSource.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGainNode);
+
+            noiseSource.start(time);
+            noiseSource.stop(time + 0.12);
+        }
+
+        // Slap Bass
+        function playSlapBass(time, freq) {
+            if (!freq) return;
+
+            const osc = audioCtx.createOscillator();
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, time);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2800, time);
+            filter.frequency.exponentialRampToValueAtTime(250, time + 0.10);
+
+            gain.gain.setValueAtTime(0.85, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.11);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGainNode);
+
+            osc.start(time);
+            osc.stop(time + 0.11);
+        }
+
+        // Precise Look-Ahead Audio Scheduler
+        function scheduler() {
+            while (nextNoteTime < audioCtx.currentTime + 0.1) {
+                scheduleStep(currentStep, nextNoteTime);
+                advanceStep();
+            }
+            if (isPlaying) {
+                timerId = setTimeout(scheduler, 25);
+            }
+        }
+
+        function advanceStep() {
+            const secondsPer16th = (60.0 / tempo) / 4.0;
+            nextNoteTime += secondsPer16th;
+            currentStep = (currentStep + 1) % 16;
+        }
+
+        function scheduleStep(stepIndex, time) {
+            // Trigger audio events precisely at target time
+            if (kickPattern[stepIndex]) playKick(time);
+            if (boDiddleySnare[stepIndex]) playSnare(time);
+            playSlapBass(time, bassNotes[stepIndex]);
+
+            // Sync visual LED updates to playback time
+            const delayMs = Math.max(0, (time - audioCtx.currentTime) * 1000);
+            setTimeout(() => {
+                if (!isPlaying) return;
+                document.querySelectorAll('.step-led').forEach((led, idx) => {
+                    if (idx === stepIndex) {
+                        led.classList.add('active');
+                    } else {
+                        led.classList.remove('active');
+                    }
+                });
+            }, delayMs);
+        }
+
+        // Visualizer Loop
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            if (!analyserNode) return;
+
+            const bufferLength = analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyserNode.getByteTimeDomainData(dataArray);
+
+            canvasCtx.fillStyle = '#0d1117';
+            canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = '#58a6ff';
+            canvasCtx.beginPath();
+
+            const sliceWidth = visualizerCanvas.width * 1.0 / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * visualizerCanvas.height / 2;
+
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            canvasCtx.lineTo(visualizerCanvas.width, visualizerCanvas.height / 2);
+            canvasCtx.stroke();
+        }
+
+        // Playback Control Handlers
+        function startPlayback() {
+            initAudioEngine();
+
+            isPlaying = true;
+            playBtn.disabled = true;
+            stopBtn.disabled = false;
+            stopBtn.classList.remove('text-[#8b949e]', 'bg-[#21262d]');
+            stopBtn.classList.add('text-white', 'bg-[#f85149]', 'hover:bg-[#da3633]');
+
+            statusText.textContent = "🎵 Playing Groove";
+            statusText.className = "text-sm font-semibold text-[#3fb950]";
+
+            currentStep = 0;
+            nextNoteTime = audioCtx.currentTime + 0.05;
+            scheduler();
+        }
+
+        function stopPlayback() {
+            isPlaying = false;
+            if (timerId) clearTimeout(timerId);
+
+            playBtn.disabled = false;
+            stopBtn.disabled = true;
+            stopBtn.classList.remove('text-white', 'bg-[#f85149]', 'hover:bg-[#da3633]');
+            stopBtn.classList.add('text-[#8b949e]', 'bg-[#21262d]');
+
+            statusText.textContent = "Stopped";
+            statusText.className = "text-sm font-semibold text-[#d29922]";
+
+            document.querySelectorAll('.step-led').forEach(led => led.classList.remove('active'));
+        }
+
+        // Sliders
+        bpmSlider.addEventListener('input', (e) => {
+            tempo = parseInt(e.target.value);
+            bpmValue.textContent = tempo;
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            volume = parseInt(e.target.value) / 100;
+            volumeValue.textContent = `${e.target.value}%`;
+            if (masterGainNode && audioCtx) {
+                masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            }
+        });
+
+        // Event Listeners
+        playBtn.addEventListener('click', startPlayback);
+        stopBtn.addEventListener('click', stopPlayback);
+
+        // Copy Clipboard Helper
+        copyPostBtn.addEventListener('click', () => {
+            const textToCopy = document.getElementById('postTemplateText').innerText;
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(showToast);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast();
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        });
+
+        function showToast() {
+            toastMessage.classList.remove('hidden');
+            setTimeout(() => {
+                toastMessage.classList.add('hidden');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
+
+```
