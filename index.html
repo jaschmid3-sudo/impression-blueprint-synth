@@ -78,7 +78,7 @@
                 </div>
                 
                 <div class="text-right">
-                    <div id="statusText" class="text-sm font-semibold text-[#d29922]">Engine Ready</div>
+                    <div id="statusText" class="text-sm font-semibold text-[#d29922]">Engine Ready (Click Play)</div>
                     <div id="barTracker" class="text-xs text-[#58a6ff] font-mono font-semibold">Bar 1 / 12 (E7 Boogie)</div>
                 </div>
             </div>
@@ -220,25 +220,21 @@ https://jaschmid3-sudo.github.io/impression-blueprint-synth/
         ];
 
         // Active 16th-Note Continuous Boogie Piano Right-Hand Lines (No Rests)
-        // E7 Piano Line 1: Crushed G-G# Grace Notes into B4-E5 Tremolo Running Line
         const eBoogieMelody1 = [
             392.00, 415.30, 493.88, 659.25, 392.00, 415.30, 493.88, 659.25,
             587.33, 493.88, 415.30, 392.00, 329.63, 392.00, 415.30, 493.88
         ];
 
-        // E7 Piano Line 2: High Octave Boogie Triads & Chromatic Descending Lick
         const eBoogieMelody2 = [
             659.25, 587.33, 493.88, 415.30, 392.00, 415.30, 493.88, 659.25,
             783.99, 659.25, 587.33, 493.88, 415.30, 392.00, 329.63, 415.30
         ];
 
-        // A7 Piano Line: Crushed C-C# Grace Notes into High A Octave Riffs
         const aBoogieMelody = [
             523.25, 554.37, 659.25, 880.00, 523.25, 554.37, 659.25, 880.00,
             783.99, 659.25, 554.37, 523.25, 440.00, 523.25, 554.37, 659.25
         ];
 
-        // B7 Piano Line: Crushed D-D# Grace Notes into Turnaround Riffs
         const bBoogieMelody = [
             587.33, 622.25, 739.99, 987.77, 587.33, 622.25, 739.99, 987.77,
             880.00, 739.99, 622.25, 587.33, 493.88, 587.33, 622.25, 739.99
@@ -276,11 +272,13 @@ https://jaschmid3-sudo.github.io/impression-blueprint-synth/
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Initialize Web Audio Context
-        function initAudioEngine() {
+        // Ensure Audio Engine Creation & Resume on Direct User Gesture
+        async function ensureAudioStarted() {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            
             if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                
+                audioCtx = new AudioContextClass();
+
                 masterGainNode = audioCtx.createGain();
                 masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
 
@@ -291,6 +289,10 @@ https://jaschmid3-sudo.github.io/impression-blueprint-synth/
                 analyserNode.connect(audioCtx.destination);
                 
                 drawVisualizer();
+            }
+
+            if (audioCtx.state === 'suspended') {
+                await audioCtx.resume();
             }
         }
 
@@ -371,7 +373,6 @@ https://jaschmid3-sudo.github.io/impression-blueprint-synth/
         function playPianoMelody(time, freq) {
             if (!freq) return;
 
-            // 3-Oscillator Acoustic Piano Sound (Fundamental + 2nd Harmonic + Octave Strike)
             const oscFundamental = audioCtx.createOscillator();
             const oscOvertone = audioCtx.createOscillator();
             const oscAttack = audioCtx.createOscillator();
@@ -384,17 +385,207 @@ https://jaschmid3-sudo.github.io/impression-blueprint-synth/
             oscAttack.type = 'square';
 
             oscFundamental.frequency.setValueAtTime(freq, time);
-            oscOvertone.frequency.setValueAtTime(freq * 2.003, time); // Detuned 1st harmonic
-            oscAttack.frequency.setValueAtTime(freq * 4, time); // High percussive strike harmonic
+            oscOvertone.frequency.setValueAtTime(freq * 2.003, time);
+            oscAttack.frequency.setValueAtTime(freq * 4, time);
 
-            // Piano Hammer Envelope Filter
             filter.type = 'lowpass';
             filter.frequency.setValueAtTime(6500, time);
             filter.frequency.exponentialRampToValueAtTime(800, time + 0.18);
 
-            // Dynamic Amplitude Envelope
             gain.gain.setValueAtTime(1.10, time);
             gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
 
             oscFundamental.connect(filter);
-            oscO
+            oscOvertone.connect(filter);
+            oscAttack.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGainNode);
+
+            oscFundamental.start(time);
+            oscOvertone.start(time);
+            oscAttack.start(time);
+
+            oscFundamental.stop(time + 0.22);
+            oscOvertone.stop(time + 0.22);
+            oscAttack.stop(time + 0.22);
+        }
+
+        // Sequencer Clock Step Routine
+        function stepScheduler() {
+            if (!audioCtx || audioCtx.state !== 'running') return;
+            
+            const now = audioCtx.currentTime;
+            const currentStep = step % 16;
+
+            // Update measure counter every 16 steps
+            if (currentStep === 0 && step > 0) {
+                currentBar = (currentBar + 1) % 12;
+            }
+
+            const currentChord = twelveBarBoogie[currentBar];
+            barTracker.textContent = `Bar ${currentBar + 1} / 12 (${currentChord.name})`;
+
+            // Highlight current step LED
+            const leds = document.querySelectorAll('.step-led');
+            leds.forEach((led, idx) => {
+                if (idx === currentStep) {
+                    led.classList.add('active');
+                } else {
+                    led.classList.remove('active');
+                }
+            });
+
+            // Play drum hits
+            if (kickPattern[currentStep]) playKick(now);
+            if (boDiddleyPattern[currentStep]) playSnare(now);
+
+            // Play continuous Boogie-Woogie walking bass note
+            playSlapBass(now, currentChord.bass[currentStep]);
+
+            // Play continuous Boogie-Woogie piano melody note
+            playPianoMelody(now, currentChord.melody[currentStep]);
+
+            step++;
+        }
+
+        // Oscilloscope Visualizer Renderer
+        function drawVisualizer() {
+            requestAnimationFrame(drawVisualizer);
+            if (!analyserNode) return;
+
+            const bufferLength = analyserNode.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyserNode.getByteTimeDomainData(dataArray);
+
+            canvasCtx.fillStyle = '#0d1117';
+            canvasCtx.fillRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
+
+            canvasCtx.lineWidth = 2;
+            canvasCtx.strokeStyle = '#58a6ff';
+            canvasCtx.beginPath();
+
+            const sliceWidth = visualizerCanvas.width * 1.0 / bufferLength;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * visualizerCanvas.height / 2;
+
+                if (i === 0) {
+                    canvasCtx.moveTo(x, y);
+                } else {
+                    canvasCtx.lineTo(x, y);
+                }
+
+                x += sliceWidth;
+            }
+
+            canvasCtx.lineTo(visualizerCanvas.width, visualizerCanvas.height / 2);
+            canvasCtx.stroke();
+        }
+
+        // Start Playback Routine
+        async function startPlayback() {
+            try {
+                await ensureAudioStarted();
+
+                if (isPlaying) return;
+
+                isPlaying = true;
+                playBtn.disabled = true;
+                stopBtn.disabled = false;
+                stopBtn.classList.remove('text-[#8b949e]', 'bg-[#21262d]');
+                stopBtn.classList.add('text-white', 'bg-[#f85149]', 'hover:bg-[#da3633]');
+
+                statusText.textContent = "🎹 Playing Boogie Piano";
+                statusText.className = "text-sm font-semibold text-[#3fb950]";
+
+                step = 0;
+                currentBar = 0;
+                
+                // Immediately schedule first step
+                stepScheduler();
+
+                const intervalMs = (60 / tempo / 4) * 1000;
+                timerId = setInterval(stepScheduler, intervalMs);
+            } catch (e) {
+                console.error("Failed to start audio playback:", e);
+                statusText.textContent = "Audio Error (Click Play again)";
+                statusText.className = "text-sm font-semibold text-[#f85149]";
+            }
+        }
+
+        // Stop Playback Routine
+        function stopPlayback() {
+            isPlaying = false;
+            if (timerId) {
+                clearInterval(timerId);
+                timerId = null;
+            }
+
+            playBtn.disabled = false;
+            stopBtn.disabled = true;
+            stopBtn.classList.remove('text-white', 'bg-[#f85149]', 'hover:bg-[#da3633]');
+            stopBtn.classList.add('text-[#8b949e]', 'bg-[#21262d]');
+
+            statusText.textContent = "Stopped";
+            statusText.className = "text-sm font-semibold text-[#d29922]";
+            barTracker.textContent = "Bar 1 / 12 (E7 Boogie)";
+
+            document.querySelectorAll('.step-led').forEach(led => led.classList.remove('active'));
+        }
+
+        // Update Tempo
+        bpmSlider.addEventListener('input', (e) => {
+            tempo = parseInt(e.target.value);
+            bpmValue.textContent = tempo;
+            if (isPlaying) {
+                clearInterval(timerId);
+                const intervalMs = (60 / tempo / 4) * 1000;
+                timerId = setInterval(stepScheduler, intervalMs);
+            }
+        });
+
+        // Update Master Volume
+        volumeSlider.addEventListener('input', (e) => {
+            volume = parseInt(e.target.value) / 100;
+            volumeValue.textContent = `${e.target.value}%`;
+            if (masterGainNode && audioCtx) {
+                masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            }
+        });
+
+        // Control Listeners
+        playBtn.addEventListener('click', startPlayback);
+        stopBtn.addEventListener('click', stopPlayback);
+
+        // Copy Clipboard Helper
+        copyPostBtn.addEventListener('click', () => {
+            const textToCopy = document.getElementById('postTemplateText').innerText;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(textToCopy).then(showToast);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast();
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        });
+
+        function showToast() {
+            toastMessage.classList.remove('hidden');
+            setTimeout(() => {
+                toastMessage.classList.add('hidden');
+            }, 2500);
+        }
+    </script>
+</body>
+</html>
