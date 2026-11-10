@@ -71,4 +71,330 @@
                         <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         Play Boogie Piano
                     </button>
-                    <button id="stop
+                    <button id="stopBtn" disabled class="bg-[#21262d] text-[#8b949e] border border-[#30363d] font-semibold px-6 py-3 rounded-lg flex items-center gap-2 transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>
+                        Stop
+                    </button>
+                </div>
+                
+                <div class="text-right">
+                    <div id="statusText" class="text-sm font-semibold text-[#d29922]">Engine Ready</div>
+                    <div id="barTracker" class="text-xs text-[#58a6ff] font-mono font-semibold">Bar 1 / 12 (E7 Boogie)</div>
+                </div>
+            </div>
+
+            <!-- Parameters Sliders -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[#0d1117] p-4 rounded-lg border border-[#30363d]">
+                <!-- Tempo Slider -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm font-medium">
+                        <label for="bpmSlider" class="text-[#c9d1d9]">Tempo (BPM)</label>
+                        <span id="bpmValue" class="text-[#58a6ff] font-mono font-bold">115</span>
+                    </div>
+                    <input type="range" id="bpmSlider" min="70" max="160" value="115" class="w-full">
+                </div>
+
+                <!-- Volume Slider -->
+                <div class="space-y-2">
+                    <div class="flex justify-between text-sm font-medium">
+                        <label for="volumeSlider" class="text-[#c9d1d9]">Master Volume</label>
+                        <span id="volumeValue" class="text-[#58a6ff] font-mono font-bold">80%</span>
+                    </div>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="80" class="w-full">
+                </div>
+            </div>
+
+            <!-- Audio Sequencer Visualizer LED Bar -->
+            <div class="space-y-2">
+                <div class="text-xs uppercase tracking-wider text-[#8b949e] font-semibold">16-Step Pattern Sequencer</div>
+                <div id="sequencerGrid" class="grid grid-cols-8 md:grid-cols-16 gap-2 pt-2">
+                    <!-- 16 LEDs generated dynamically -->
+                </div>
+            </div>
+
+            <!-- Realtime Audio Visualizer Canvas -->
+            <div class="space-y-1">
+                <div class="text-xs uppercase tracking-wider text-[#8b949e] font-semibold">Oscilloscope Output</div>
+                <canvas id="visualizerCanvas" class="w-full h-24 bg-[#0d1117] border border-[#30363d] rounded-lg"></canvas>
+            </div>
+        </div>
+
+        <!-- Strategy Information Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-3">
+                <h2 class="text-lg font-bold text-[#58a6ff] flex items-center gap-2">
+                    <span>⚡</span> 1. Fast-Track Reach Channels
+                </h2>
+                <ul class="text-sm space-y-2 text-[#8b949e] list-disc list-inside">
+                    <li><strong class="text-[#c9d1d9]">Short-Form Video:</strong> TikTok/Reels feed early tests to 100+ viewers instantly.</li>
+                    <li><strong class="text-[#c9d1d9]">High-Velocity Feeds:</strong> Active posts on LinkedIn and X scale rapid engagement.</li>
+                    <li><strong class="text-[#c9d1d9]">Micro Paid Ads:</strong> A small $2-$5 targeted campaign yields instant impressions.</li>
+                </ul>
+            </div>
+
+            <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-5 space-y-3">
+                <h2 class="text-lg font-bold text-[#58a6ff] flex items-center gap-2">
+                    <span>🎯</span> 2. High-Intent Keywords
+                </h2>
+                <ul class="text-sm space-y-2 text-[#8b949e] list-disc list-inside">
+                    <li><strong class="text-[#c9d1d9]">Navigational Search:</strong> Direct query terms like YouTube, GitHub, ChatGPT.</li>
+                    <li><strong class="text-[#c9d1d9]">Daily Utilities:</strong> High frequency words: Weather, Translate, Converter.</li>
+                    <li><strong class="text-[#c9d1d9]">Interactive Web Apps:</strong> Live audio synths and WebGL showcases.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- LinkedIn Post Copy Card -->
+        <div class="bg-[#161b22] border border-[#30363d] rounded-xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-base font-bold text-[#c9d1d9]">Shareable LinkedIn Post Template</h3>
+                <button id="copyPostBtn" class="bg-[#21262d] hover:bg-[#30363d] text-[#58a6ff] border border-[#30363d] text-xs font-semibold px-4 py-2 rounded-md transition duration-150 flex items-center gap-2">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+                    <span>Copy Text</span>
+                </button>
+            </div>
+            
+            <div class="relative">
+                <pre id="postTemplateText" class="bg-[#0d1117] border border-[#30363d] rounded-lg p-4 text-xs md:text-sm text-[#c9d1d9] whitespace-pre-wrap font-sans leading-relaxed">🚀 Driving 100+ Impressions in Under 1 Hour: Strategy & Synthesizer Demo
+
+Want to capture immediate audience attention online? Check out this interactive Web Audio synthesizer built purely with code!
+
+It combines a classic Bo Diddley rhythm section with a 12-bar Boogie-Woogie bassline and acoustic piano melody directly in your browser.
+
+Try the live audio demo here:
+https://jaschmid3-sudo.github.io/impression-blueprint-synth/
+
+#WebAudio #JavaScript #Synthesizer #DigitalMarketing #WebDev</pre>
+            </div>
+            <div id="toastMessage" class="hidden text-xs text-[#3fb950] font-semibold text-right">✓ Copied to clipboard!</div>
+        </div>
+
+    </div>
+
+    <!-- Web Audio & Visualizer Script -->
+    <script>
+        // Audio Engine State
+        let audioCtx = null;
+        let masterGainNode = null;
+        let analyserNode = null;
+        let isPlaying = false;
+        let step = 0;
+        let currentBar = 0;
+        let timerId = null;
+        let tempo = 115;
+        let volume = 0.8;
+
+        // UI Element References
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusText = document.getElementById('statusText');
+        const barTracker = document.getElementById('barTracker');
+        const bpmSlider = document.getElementById('bpmSlider');
+        const bpmValue = document.getElementById('bpmValue');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const volumeValue = document.getElementById('volumeValue');
+        const sequencerGrid = document.getElementById('sequencerGrid');
+        const visualizerCanvas = document.getElementById('visualizerCanvas');
+        const copyPostBtn = document.getElementById('copyPostBtn');
+        const toastMessage = document.getElementById('toastMessage');
+        const canvasCtx = visualizerCanvas.getContext('2d');
+
+        // Rhythm Patterns
+        const boDiddleyPattern = [1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0];
+        const kickPattern = [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0];
+
+        // Classic Boogie-Woogie Walking Bass Sequences
+        const eBoogieBass = [
+            41.20, 41.20, 51.91, 61.74, 69.30, 73.42, 69.30, 61.74,
+            41.20, 41.20, 51.91, 61.74, 69.30, 73.42, 69.30, 51.91
+        ];
+
+        const aBoogieBass = [
+            55.00, 55.00, 69.30, 82.41, 92.50, 98.00, 92.50, 82.41,
+            55.00, 55.00, 69.30, 82.41, 92.50, 98.00, 92.50, 69.30
+        ];
+
+        const bBoogieBass = [
+            61.74, 61.74, 77.78, 92.50, 103.83, 110.00, 103.83, 92.50,
+            61.74, 61.74, 77.78, 92.50, 103.83, 110.00, 103.83, 77.78
+        ];
+
+        // Active 16th-Note Continuous Boogie Piano Right-Hand Lines (No Rests)
+        // E7 Piano Line 1: Crushed G-G# Grace Notes into B4-E5 Tremolo Running Line
+        const eBoogieMelody1 = [
+            392.00, 415.30, 493.88, 659.25, 392.00, 415.30, 493.88, 659.25,
+            587.33, 493.88, 415.30, 392.00, 329.63, 392.00, 415.30, 493.88
+        ];
+
+        // E7 Piano Line 2: High Octave Boogie Triads & Chromatic Descending Lick
+        const eBoogieMelody2 = [
+            659.25, 587.33, 493.88, 415.30, 392.00, 415.30, 493.88, 659.25,
+            783.99, 659.25, 587.33, 493.88, 415.30, 392.00, 329.63, 415.30
+        ];
+
+        // A7 Piano Line: Crushed C-C# Grace Notes into High A Octave Riffs
+        const aBoogieMelody = [
+            523.25, 554.37, 659.25, 880.00, 523.25, 554.37, 659.25, 880.00,
+            783.99, 659.25, 554.37, 523.25, 440.00, 523.25, 554.37, 659.25
+        ];
+
+        // B7 Piano Line: Crushed D-D# Grace Notes into Turnaround Riffs
+        const bBoogieMelody = [
+            587.33, 622.25, 739.99, 987.77, 587.33, 622.25, 739.99, 987.77,
+            880.00, 739.99, 622.25, 587.33, 493.88, 587.33, 622.25, 739.99
+        ];
+
+        // 12-Bar Boogie-Woogie Structure
+        const twelveBarBoogie = [
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 1
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody2 }, // Bar 2
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 3
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody2 }, // Bar 4
+            { name: "A7 Boogie", bass: aBoogieBass, melody: aBoogieMelody  }, // Bar 5
+            { name: "A7 Boogie", bass: aBoogieBass, melody: aBoogieMelody  }, // Bar 6
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 7
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody2 }, // Bar 8
+            { name: "B7 Boogie", bass: bBoogieBass, melody: bBoogieMelody  }, // Bar 9
+            { name: "A7 Boogie", bass: aBoogieBass, melody: aBoogieMelody  }, // Bar 10
+            { name: "E7 Boogie", bass: eBoogieBass, melody: eBoogieMelody1 }, // Bar 11
+            { name: "B7 Turnaround", bass: bBoogieBass, melody: bBoogieMelody }  // Bar 12
+        ];
+
+        // Build Sequencer LEDs
+        for (let i = 0; i < 16; i++) {
+            const led = document.createElement('div');
+            led.className = `step-led h-3 rounded-full bg-[#21262d] border border-[#30363d] ${boDiddleyPattern[i] ? 'accent' : ''}`;
+            led.id = `led-${i}`;
+            sequencerGrid.appendChild(led);
+        }
+
+        // Resize Canvas dynamically
+        function resizeCanvas() {
+            visualizerCanvas.width = visualizerCanvas.clientWidth;
+            visualizerCanvas.height = visualizerCanvas.clientHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Initialize Web Audio Context
+        function initAudioEngine() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                masterGainNode = audioCtx.createGain();
+                masterGainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+
+                analyserNode = audioCtx.createAnalyser();
+                analyserNode.fftSize = 256;
+
+                masterGainNode.connect(analyserNode);
+                analyserNode.connect(audioCtx.destination);
+                
+                drawVisualizer();
+            }
+        }
+
+        // Trigger Kick Drum Sound
+        function playKick(time) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(masterGainNode);
+
+            osc.frequency.setValueAtTime(130, time);
+            osc.frequency.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+            gain.gain.setValueAtTime(1.0, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.16);
+
+            osc.start(time);
+            osc.stop(time + 0.16);
+        }
+
+        // Trigger Snare Drum Sound
+        function playSnare(time) {
+            const bufferSize = audioCtx.sampleRate * 0.12;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const whiteNoise = audioCtx.createBufferSource();
+            whiteNoise.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.setValueAtTime(800, time);
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.6, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.12);
+
+            whiteNoise.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGainNode);
+
+            whiteNoise.start(time);
+            whiteNoise.stop(time + 0.12);
+        }
+
+        // Trigger Slap Bass Sound
+        function playSlapBass(time, freq) {
+            if (!freq) return;
+
+            const osc = audioCtx.createOscillator();
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(freq, time);
+
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(2800, time);
+            filter.frequency.exponentialRampToValueAtTime(250, time + 0.10);
+
+            gain.gain.setValueAtTime(0.85, time);
+            gain.gain.exponentialRampToValueAtTime(0.01, time + 0.11);
+
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(masterGainNode);
+
+            osc.start(time);
+            osc.stop(time + 0.11);
+        }
+
+        // Bright Acoustic Piano Sound Generator
+        function playPianoMelody(time, freq) {
+            if (!freq) return;
+
+            // 3-Oscillator Acoustic Piano Sound (Fundamental + 2nd Harmonic + Octave Strike)
+            const oscFundamental = audioCtx.createOscillator();
+            const oscOvertone = audioCtx.createOscillator();
+            const oscAttack = audioCtx.createOscillator();
+
+            const filter = audioCtx.createBiquadFilter();
+            const gain = audioCtx.createGain();
+
+            oscFundamental.type = 'triangle';
+            oscOvertone.type = 'sine';
+            oscAttack.type = 'square';
+
+            oscFundamental.frequency.setValueAtTime(freq, time);
+            oscOvertone.frequency.setValueAtTime(freq * 2.003, time); // Detuned 1st harmonic
+            oscAttack.frequency.setValueAtTime(freq * 4, time); // High percussive strike harmonic
+
+            // Piano Hammer Envelope Filter
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(6500, time);
+            filter.frequency.exponentialRampToValueAtTime(800, time + 0.18);
+
+            // Dynamic Amplitude Envelope
+            gain.gain.setValueAtTime(1.10, time);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+
+            oscFundamental.connect(filter);
+            oscO
